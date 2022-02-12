@@ -1,7 +1,7 @@
 /* vga_mystic.v
  * ECE 581: Lab 5
  * 11/21/2018
- * Julian Diaz & Jase McCaleb
+ * Julian Diaz & Buddha
  *************************************************************/
 module vga_mystic (
 	input clock_50, k0, k1, k2, k3,
