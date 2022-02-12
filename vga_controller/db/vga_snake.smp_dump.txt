@@ -1,0 +1,28 @@
+
+State Machine - |vga_snake|fun_snake:snake_inst1|prev_dir
+Name prev_dir.00 prev_dir.10 prev_dir.01 prev_dir.11 
+prev_dir.11 0 0 0 0 
+prev_dir.01 0 0 1 1 
+prev_dir.10 0 1 0 1 
+prev_dir.00 1 0 0 1 
+
+State Machine - |vga_snake|fun_snake:snake_inst1|direction
+Name direction.00 direction.10 direction.01 direction.11 
+direction.11 0 0 0 0 
+direction.01 0 0 1 1 
+direction.10 0 1 0 1 
+direction.00 1 0 0 1 
+
+State Machine - |vga_snake|snake:snake_inst|prev_dir
+Name prev_dir.00 prev_dir.10 prev_dir.01 prev_dir.11 
+prev_dir.11 0 0 0 0 
+prev_dir.01 0 0 1 1 
+prev_dir.10 0 1 0 1 
+prev_dir.00 1 0 0 1 
+
+State Machine - |vga_snake|snake:snake_inst|direction
+Name direction.00 direction.10 direction.01 direction.11 
+direction.11 0 0 0 0 
+direction.01 0 0 1 1 
+direction.10 0 1 0 1 
+direction.00 1 0 0 1 

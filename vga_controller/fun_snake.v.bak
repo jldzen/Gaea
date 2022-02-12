@@ -1,0 +1,137 @@
+/* snake.v
+ * ECE 581: Lab 5
+ * 12/07/2018
+ * Julian Diaz & Jase McCaleb
+ *************************************************************/
+
+ module snake (
+	input [9:0] pixel_row, pixel_column, 
+	input vert_sync, clk50, k0, k1, k2, k3, reset, pause, pixel_clock,
+	output red, green, blue
+);
+	reg [18:0] wraddress, snake_y_motion, snake_y_pos, apple_y_pos, rnd_row;
+	reg [9:0] size, rnd_col, snake_x_motion, snake_x_pos, apple_x_pos;
+	wire wren, data_r; 
+	wire [18:0] rdaddress;
+	reg freeze, hv_, a, w, data_w;
+	
+	 snake_ram	snake_ram_inst (
+		.clock (pixel_clock),
+		.data (data_w),
+		.rdaddress (rdaddress),
+		.wraddress (wraddress),
+		.wren (wren),
+		.q (data_r)
+	);
+	
+	always @(posedge clk50) begin
+		if (rnd_col >= 10'd640) rnd_col = 10'd8;
+		else rnd_col = rnd_col + 1;
+		
+		if (rnd_row >= 10'd480) rnd_row = 10'd8;
+		else rnd_row = rnd_row + 1;
+	end
+	
+	assign wren = 1'b1;
+	
+	assign red = (reset && a) ? 1'b1 : 1'b0;
+	assign green = (reset && ~a) ? data_r : 1'b0;
+	assign blue = 1'b0;
+	
+	assign rdaddress = ((pixel_column < 640) && (pixel_row < 480)) ? (pixel_column * (pixel_row + 1)) : 19'd0;
+	
+	// define snake or apples graphic elements pixel-wise based on relative position
+	always @ (*) begin
+		if (~reset) 	a = 1'b0;
+		else if ((apple_x_pos <= (pixel_column + 10'd8)) && (apple_x_pos >= pixel_column) && (apple_y_pos <= (pixel_row + 10'd8)) && ((apple_y_pos) >= pixel_row))
+						a = 1'b1;		
+		else 			a = 1'b0;
+	end
+	
+  // define graphics positions based on key presses
+	always @ (negedge vert_sync) begin
+		if (~reset) begin
+			snake_y_pos <= 9'd240;
+			snake_x_pos <= 10'd11;
+			snake_x_motion <= 10'd1;
+			snake_y_motion <= 9'd0;
+			apple_x_pos <= rnd_col;
+			apple_y_pos <= rnd_row;
+			size <= 10'd30;
+			wraddress <= rdaddress;
+			data_w <= 1'b0;
+			hv_ <= 1'b1;
+			freeze <= 1'b0;
+		end else if (~freeze && ~pause) begin
+			data_w <= 1'b1;
+			if (~hv_) begin
+				if (~k2 && k1 && k0) begin
+					snake_y_motion <= 9'd0; 
+					snake_x_motion <= -10'd1;
+					hv_ <= 1'b1;
+				end else if (~k3 && k1 && k0) begin
+					snake_y_motion <= 9'd0;
+					snake_x_motion <= 10'd1;
+					hv_ <= 1'b1;
+					
+				end
+			end	else begin
+				if (~k0 && k2 && k3) begin
+					snake_y_motion <= -9'd1;
+					snake_x_motion <= 10'd0;
+					hv_ <= 1'b0;
+				end else if (~k1 && k2 && k3) begin
+					snake_y_motion <= 9'd1;
+					snake_x_motion <= 10'd0;
+					hv_ <= 1'b0;
+				end
+			end
+			
+			snake_y_pos <= snake_y_pos + snake_y_motion;
+			snake_x_pos <= snake_x_pos + snake_x_motion;
+			wraddress <= snake_x_pos * (snake_y_pos + 1);
+			
+//			if (~hv_) begin
+//				wraddress <= (snake_x_pos + 1) * (snake_y_pos + 1);
+//				wraddress <= (snake_x_pos + 2) * (snake_y_pos + 1);
+//				wraddress <= (snake_x_pos + 3) * (snake_y_pos + 1);
+//				wraddress <= (snake_x_pos + 4) * (snake_y_pos + 1);
+//				wraddress <= (snake_x_pos + 5) * (snake_y_pos + 1);
+//				wraddress <= (snake_x_pos + 6) * (snake_y_pos + 1);
+//				wraddress <= (snake_x_pos + 7) * (snake_y_pos + 1);
+//				wraddress <= (snake_x_pos + 8) * (snake_y_pos + 1);
+//				wraddress <= (snake_x_pos + 9) * (snake_y_pos + 1);
+//			end else begin
+//				wraddress <= snake_x_pos * (snake_y_pos + 2);
+//				wraddress <= snake_x_pos * (snake_y_pos + 3);
+//				wraddress <= snake_x_pos * (snake_y_pos + 4);
+//				wraddress <= snake_x_pos * (snake_y_pos + 5);
+//				wraddress <= snake_x_pos * (snake_y_pos + 6);
+//				wraddress <= snake_x_pos * (snake_y_pos + 7);
+//				wraddress <= snake_x_pos * (snake_y_pos + 8);
+//				wraddress <= snake_x_pos * (snake_y_pos + 9);
+//				wraddress <= snake_x_pos * (snake_y_pos + 10);
+//			end
+			
+			if (pause) begin
+				snake_x_motion <= 10'd0;
+				snake_y_motion <= 9'd0;
+			end
+			if (snake_x_pos <= 10'd10 || snake_x_pos >= 10'd640) 	begin
+				snake_x_motion <= 10'd0;
+				freeze <= 1'b1;
+			end
+			if (snake_y_pos <= 9'd10 || snake_y_pos >= 9'd480) 	begin
+				snake_y_motion <= 9'd0;
+				freeze <= 1'b1;
+			end
+			
+			if ((snake_x_pos >= (apple_x_pos - 10'd10)) && (snake_x_pos <= (apple_x_pos + 10'd10)) && (snake_y_pos >= (apple_y_pos - 10'd10)) && (snake_y_pos <= (apple_y_pos + 10'd10)))	begin
+				apple_x_pos <= rnd_col;
+				apple_y_pos <= rnd_row;
+				size <= size + 10'd10;
+			end
+		end
+	end
+	
+endmodule
